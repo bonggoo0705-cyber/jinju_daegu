@@ -1,0 +1,37 @@
+name: Collect weather data
+
+on:
+  schedule:
+    # 매시 17분 UTC 실행. GitHub Actions의 실제 시작 시각은 다소 지연될 수 있습니다.
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Collect weather data
+        run: python weather_collector.py
+
+      - name: Commit and push updated CSV
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/weather.csv
+          if git diff --cached --quiet; then
+            echo "No weather data changes to commit."
+          else
+            git commit -m "chore: collect weather data"
+            git push
+          fi
